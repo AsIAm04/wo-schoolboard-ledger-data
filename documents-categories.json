@@ -27,7 +27,7 @@
     },
     "budget-finance": {
       "category": "Budget-Finance",
-      "count": 40,
+      "count": 43,
       "file": "documents-budget-finance.json"
     },
     "bylaws-policies-regulations": {
@@ -35,11 +35,16 @@
       "count": 20,
       "file": "documents-bylaws-policies-regulations.json"
     },
+    "collective-bargaining-agreements": {
+      "category": "Collective-Bargaining-Agreements",
+      "count": 6,
+      "file": "documents-collective-bargaining-agreements.json"
+    },
     "goals-strategic-plan": {
       "category": "Goals-Strategic-Plan",
       "count": 1,
       "file": "documents-goals-strategic-plan.json"
     }
   },
-  "total_documents": 244
+  "total_documents": 253
 }

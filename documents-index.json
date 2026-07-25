@@ -66,51 +66,48 @@
     "agendas-minutes": {
       "category": "Agendas-Minutes",
       "count": 123,
-      "file": "documents-agendas-minutes.json",
-      "embeddings_file": "embeddings-agendas-minutes.json"
+      "file": "documents-agendas-minutes.json"
     },
     "boe-meeting-information": {
       "category": "BOE-Meeting-Information",
       "count": 2,
-      "file": "documents-boe-meeting-information.json",
-      "embeddings_file": "embeddings-boe-meeting-information.json"
+      "file": "documents-boe-meeting-information.json"
     },
     "bids-rfps": {
       "category": "Bids-RFPs",
       "count": 18,
-      "file": "documents-bids-rfps.json",
-      "embeddings_file": "embeddings-bids-rfps.json"
+      "file": "documents-bids-rfps.json"
     },
     "board-member-roles": {
       "category": "Board-Member-Roles",
       "count": 2,
-      "file": "documents-board-member-roles.json",
-      "embeddings_file": "embeddings-board-member-roles.json"
+      "file": "documents-board-member-roles.json"
     },
     "board-presentations": {
       "category": "Board-Presentations",
       "count": 38,
-      "file": "documents-board-presentations.json",
-      "embeddings_file": "embeddings-board-presentations.json"
+      "file": "documents-board-presentations.json"
     },
     "budget-finance": {
       "category": "Budget-Finance",
-      "count": 40,
-      "file": "documents-budget-finance.json",
-      "embeddings_file": "embeddings-budget-finance.json"
+      "count": 43,
+      "file": "documents-budget-finance.json"
     },
     "bylaws-policies-regulations": {
       "category": "Bylaws-Policies-Regulations",
       "count": 20,
-      "file": "documents-bylaws-policies-regulations.json",
-      "embeddings_file": "embeddings-bylaws-policies-regulations.json"
+      "file": "documents-bylaws-policies-regulations.json"
+    },
+    "collective-bargaining-agreements": {
+      "category": "Collective-Bargaining-Agreements",
+      "count": 6,
+      "file": "documents-collective-bargaining-agreements.json"
     },
     "goals-strategic-plan": {
       "category": "Goals-Strategic-Plan",
       "count": 1,
-      "file": "documents-goals-strategic-plan.json",
-      "embeddings_file": "embeddings-goals-strategic-plan.json"
+      "file": "documents-goals-strategic-plan.json"
     }
   },
-  "total_documents": 244
+  "total_documents": 253
 }
