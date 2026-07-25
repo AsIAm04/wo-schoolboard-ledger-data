@@ -1,0 +1,65 @@
+{
+  "years": {
+    "2021": {
+      "count": 30,
+      "file": "meetings-2021.json",
+      "type_counts": {
+        "Virtual": 16,
+        "Policy Workshop": 5,
+        "Special": 3,
+        "Budget": 1,
+        "Training": 1,
+        "Regular": 12,
+        "Goal Setting": 1,
+        "Parade of Honors": 1,
+        "Report": 1
+      }
+    },
+    "2022": {
+      "count": 23,
+      "file": "meetings-2022.json",
+      "type_counts": {
+        "Reorganization": 1,
+        "Virtual": 3,
+        "Special": 1,
+        "Budget": 2,
+        "Regular": 17,
+        "Parade of Honors": 1
+      }
+    },
+    "2023": {
+      "count": 13,
+      "file": "meetings-2023.json",
+      "type_counts": {
+        "Reorganization": 1,
+        "Regular": 11,
+        "Parade of Honors": 1
+      }
+    },
+    "2024": {
+      "count": 12,
+      "file": "meetings-2024.json",
+      "type_counts": {
+        "Regular": 12
+      }
+    },
+    "2025": {
+      "count": 12,
+      "file": "meetings-2025.json",
+      "type_counts": {
+        "Reorganization": 1,
+        "Regular": 11
+      }
+    },
+    "2026": {
+      "count": 7,
+      "file": "meetings-2026.json",
+      "type_counts": {
+        "Reorganization": 1,
+        "Regular": 6
+      }
+    }
+  },
+  "total_meetings": 97,
+  "generated_from": "raw meeting transcripts (.txt)"
+}
