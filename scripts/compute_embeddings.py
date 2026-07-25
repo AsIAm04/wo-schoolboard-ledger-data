@@ -1,11 +1,20 @@
 """
 Embed every segment of the document corpus (documents-*.json, per documents-index.json's
 "document_categories") using Cloudflare Workers AI's @cf/baai/bge-small-en-v1.5 model, and write
-one embeddings-<slug>.json per category.
+ONE combined embeddings-all.json covering every category.
+
+Originally this wrote one embeddings-<slug>.json per category, and the worker fetched each of
+them separately. That worked at 8 categories but broke at 9 -- "Too many subrequests by single
+Worker invocation" (Cloudflare's hard cap on outbound fetch()/binding calls per request). Every
+additional category was one more mandatory fetch on every single question, on top of the
+document-text fetches for whichever categories won and the meeting-transcript fetches -- it was
+always going to hit a wall as more categories got added, just a question of when. Consolidating
+to one file fixes this permanently regardless of how many categories exist: it's always exactly
+one fetch to retrieve every embedding, no matter whether there are 9 categories or 30.
 
 No Vectorize, no external embedding API bill of any real size: bge-small-en-v1.5 costs 1841
 neurons per M input tokens, and Workers AI gives 10,000 free neurons/day on every plan
-(Free or Paid). The whole ~2.5M-token document corpus comes out to roughly 4,700 neurons --
+(Free or Paid). The whole ~2.7M-token document corpus comes out to roughly 4,900 neurons --
 under half of one day's free allocation, in a single run.
 
 Does NOT touch meetings-YYYY.json -- meeting transcripts stay on the existing keyword-overlap
@@ -19,18 +28,19 @@ Usage:
     # test the pipeline without calling the API:
     python3 scripts/compute_embeddings.py . --stub
 
-Output: embeddings-<slug>.json per category, shape:
+Output: embeddings-all.json, shape:
     {"vectors": [{"id": "<docId>--<segmentIndex>", "v": [384 floats], "docId": ...,
-                  "segmentIndex": ..., "category": ..., "subcategory": ..., "title": ...,
-                  "date": ..., "docType": ..., "sourceUrl": ...}]}
-No segment text is stored here -- worker.js fetches the matching documents-<slug>.json (already
-cached from the initial index lookup) to pull the actual text for the handful of winning
-candidates, which keeps these embedding files -- and the amount of JSON a Worker has to parse
-on every request -- much smaller than the full document corpus.
+                  "segmentIndex": ..., "slug": ..., "category": ..., "subcategory": ...,
+                  "title": ..., "date": ..., "docType": ..., "sourceUrl": ...]}
+No segment text is stored here -- worker.js fetches the matching documents-<slug>.json (using
+the "slug" field to know which one) to pull the actual text for the handful of winning
+candidates, which keeps this file -- and the amount of JSON a Worker has to parse on every
+request -- much smaller than the full document corpus.
 
-Also updates documents-index.json's document_categories entries with an "embeddings_file" key.
+Also updates documents-index.json with a top-level "embeddings_file" key (replaces any older
+per-category "embeddings_file" entries from a previous version of this script).
 """
-import os, sys, json, math, time, hashlib, argparse, urllib.request, urllib.error
+import os, re, sys, json, math, time, hashlib, argparse, urllib.request, urllib.error
 
 MODEL = "@cf/baai/bge-small-en-v1.5"
 DIMENSIONS = 384
@@ -95,13 +105,12 @@ def load_segments(out_dir):
             for i, seg_text in enumerate(doc["segments"]):
                 embed_text = " ".join(seg_text.split()[:MAX_EMBED_INPUT_WORDS])
                 segments.append({
-                    "slug": slug,
-                    "vector_id": f"{doc['id']}--{i}",
                     "embed_text": embed_text,
                     "metadata": {
                         "id": f"{doc['id']}--{i}",
                         "docId": doc["id"],
                         "segmentIndex": i,
+                        "slug": slug,
                         "category": doc["category"],
                         "subcategory": doc.get("subcategory") or "",
                         "title": doc["title"],
@@ -127,6 +136,12 @@ def main():
               "Export both or pass --stub to test the pipeline with fake vectors.",
               file=sys.stderr)
         sys.exit(1)
+    if not args.stub and not re.fullmatch(r"[0-9a-f]{32}", account_id or ""):
+        print(f"CLOUDFLARE_ACCOUNT_ID doesn't look like a real Cloudflare account id "
+              f"(got: {account_id!r}) -- it should be a 32-character hex string from your "
+              f"Cloudflare dashboard, not a placeholder. Fix the export and re-run.",
+              file=sys.stderr)
+        sys.exit(1)
 
     segments, index = load_segments(args.data_dir)
     total_words = sum(len(s["embed_text"].split()) for s in segments)
@@ -138,36 +153,32 @@ def main():
         print(f"Estimated Workers AI cost: ~{est_neurons:,.0f} neurons "
               f"(free allocation is 10,000/day) -- effectively $0 in a single run")
 
-    by_slug = {}
-    for s in segments:
-        by_slug.setdefault(s["slug"], []).append(s)
+    out_path = os.path.join(args.data_dir, "embeddings-all.json")
+    vectors_out = []
+    for i in range(0, len(segments), args.batch_size):
+        batch = segments[i:i + args.batch_size]
+        texts = [s["embed_text"] for s in batch]
+        if args.stub:
+            vecs = [stub_embedding(t) for t in texts]
+        else:
+            vecs = call_workers_ai_batch(account_id, api_token, texts)
+        for seg, v in zip(batch, vecs):
+            vectors_out.append({**seg["metadata"], "v": v})
+        print(f"  embedded {min(i + args.batch_size, len(segments))}/{len(segments)}",
+              end="\r", flush=True)
+    print()
+    with open(out_path, "w") as f:
+        json.dump({"vectors": vectors_out}, f)
+    print(f"wrote {len(vectors_out)} vectors -> {out_path}")
 
-    updated_categories = dict(index.get("document_categories", {}))
-
-    for slug, segs in sorted(by_slug.items()):
-        out_path = os.path.join(args.data_dir, f"embeddings-{slug}.json")
-        vectors_out = []
-        for i in range(0, len(segs), args.batch_size):
-            batch = segs[i:i + args.batch_size]
-            texts = [s["embed_text"] for s in batch]
-            if args.stub:
-                vecs = [stub_embedding(t) for t in texts]
-            else:
-                vecs = call_workers_ai_batch(account_id, api_token, texts)
-            for seg, v in zip(batch, vecs):
-                vectors_out.append({**seg["metadata"], "v": v})
-            print(f"  [{slug}] embedded {min(i + args.batch_size, len(segs))}/{len(segs)}",
-                  end="\r", flush=True)
-        print()
-        with open(out_path, "w") as f:
-            json.dump({"vectors": vectors_out}, f)
-        updated_categories[slug]["embeddings_file"] = f"embeddings-{slug}.json"
-        print(f"  wrote {len(vectors_out)} vectors -> {out_path}")
-
-    index["document_categories"] = updated_categories
+    # Clean up any older per-category embeddings_file keys from a previous version of this
+    # script, and set the single combined one instead.
+    for slug, info in index.get("document_categories", {}).items():
+        info.pop("embeddings_file", None)
+    index["embeddings_file"] = "embeddings-all.json"
     with open(os.path.join(args.data_dir, "documents-index.json"), "w") as f:
         json.dump(index, f, indent=2)
-    print("\ndocuments-index.json updated with embeddings_file per category")
+    print("documents-index.json updated: top-level embeddings_file = embeddings-all.json")
 
 
 if __name__ == "__main__":

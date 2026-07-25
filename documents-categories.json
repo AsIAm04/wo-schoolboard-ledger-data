@@ -27,7 +27,7 @@
     },
     "budget-finance": {
       "category": "Budget-Finance",
-      "count": 43,
+      "count": 44,
       "file": "documents-budget-finance.json"
     },
     "bylaws-policies-regulations": {
@@ -46,5 +46,5 @@
       "file": "documents-goals-strategic-plan.json"
     }
   },
-  "total_documents": 253
+  "total_documents": 254
 }
