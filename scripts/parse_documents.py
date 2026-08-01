@@ -92,6 +92,41 @@ def parse_bylaws(fpath, fname, subfolder, text):
     return title, None, subfolder
 
 
+
+def parse_bids_rfps(fpath, fname, subfolder, text):
+    """Bid/RFP notices don't have the reference header, and the source filenames are just
+    sequence numbers (Bid 2025 2026 03, etc). Pull the real subject line out of the body
+    instead -- there are four recurring boilerplate formats used by the district. Falls back
+    to the humanized filename if none of the patterns produce a plausible subject, so a
+    format we haven't seen yet degrades gracefully instead of grabbing garbage."""
+    stem = fname[:-4] if fname.lower().endswith(".txt") else fname
+    date = extract_date_yyyymmdd(fname)
+    body = re.sub(r"[\u200b\s]+", " ", text).strip()
+    upper = body.upper()
+    subject = None
+
+    if "BID SUMMARY" in upper:
+        m = re.search(r"formal bids were solicited for (.+?)(?:,?\s*(?:Bid\s*)?#\s*\d[\w\-]*|\.)", body)
+        if m:
+            subject = m.group(1).strip(" ,-")
+    if subject is None and "NOTICE TO BIDDERS" in upper:
+        m = re.search(r"for the (.+?)\.\s*Bids must be submitted", body)
+        if m:
+            subject = m.group(1).strip(" ,-")
+    if subject is None and "REQUEST FOR BIDS" in upper:
+        m = re.search(r"Bid No\.\s*[\d\w\-]+\s*(.+?)\s*(?:Bidders shall be prequalified|All necessary bid specifications)", body)
+        if m:
+            subject = re.sub(r"\s{2,}", " ", m.group(1)).strip(" ,-")
+    if subject is None and "COMPETITIVE CONTRACTING" in upper:
+        m = re.search(r"PROPOSAL NO\.\s*\S+\s+\S+\s*(.+?)\s*All necessary proposal specifications", body)
+        if m:
+            subject = re.sub(r"\s+", " ", m.group(1)).strip(" ,-")
+
+    if subject and 5 <= len(subject) <= 120:
+        return subject, date, "Bid-RFP"
+    return humanize(stem), date, None
+
+
 def parse_generic(fpath, fname, subfolder, text):
     stem = fname[:-4] if fname.lower().endswith(".txt") else fname
     date = extract_date_yyyymmdd(fname)
@@ -102,6 +137,7 @@ def parse_generic(fpath, fname, subfolder, text):
 CATEGORY_PARSERS = {
     "Agendas-Minutes": parse_agendas_minutes,
     "Bylaws-Policies-Regulations": parse_bylaws,
+    "Bids-RFPs": parse_bids_rfps,
 }
 
 
