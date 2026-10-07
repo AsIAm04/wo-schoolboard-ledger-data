@@ -2,7 +2,7 @@
   "categories": {
     "agendas-minutes": {
       "category": "Agendas-Minutes",
-      "count": 123,
+      "count": 132,
       "file": "documents-agendas-minutes.json"
     },
     "boe-meeting-information": {
@@ -46,5 +46,5 @@
       "file": "documents-goals-strategic-plan.json"
     }
   },
-  "total_documents": 254
+  "total_documents": 263
 }
