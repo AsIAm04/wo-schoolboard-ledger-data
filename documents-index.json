@@ -52,20 +52,20 @@
       }
     },
     "2026": {
-      "count": 7,
+      "count": 9,
       "file": "meetings-2026.json",
       "type_counts": {
         "Reorganization": 1,
-        "Regular": 6
+        "Regular": 8
       }
     }
   },
-  "total_meetings": 97,
+  "total_meetings": 99,
   "generated_from": "raw meeting transcripts (.txt)",
   "document_categories": {
     "agendas-minutes": {
       "category": "Agendas-Minutes",
-      "count": 132,
+      "count": 130,
       "file": "documents-agendas-minutes.json"
     },
     "boe-meeting-information": {
@@ -109,6 +109,6 @@
       "file": "documents-goals-strategic-plan.json"
     }
   },
-  "total_documents": 263,
+  "total_documents": 261,
   "embeddings_file": "embeddings-all.json"
 }
