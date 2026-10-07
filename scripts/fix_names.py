@@ -14,7 +14,7 @@ Usage:
     python3 scripts/fix_names.py json .
 
     # local source .txt folders, in place (so a rebuild with parse.py keeps the fixes).
-    # Only folders named "20XX Board of Education Meeting(s)" are touched:
+    # Only folders named "20XX Board of Education(al) Meeting(s)" are touched:
     python3 scripts/fix_names.py txt ~/Documents/"WO school board"
 
     # dry run either mode (prints counts, writes nothing):
@@ -84,7 +84,7 @@ CONTEXT_FIXES = [
 ]
 
 TOKEN_RE = re.compile(r"\b(" + "|".join(sorted(map(re.escape, TOKEN_MAP), key=len, reverse=True)) + r")\b")
-MEETING_DIR_RE = re.compile(r"^20\d\d Board of Education Meetings?$", re.I)
+MEETING_DIR_RE = re.compile(r"^20\d\d Board of Education(al)? Meetings?$", re.I)
 
 
 def in_range(date, rng):
